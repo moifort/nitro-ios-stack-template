@@ -2,6 +2,7 @@ import { generateDomainInstrumentation } from './server/system/sentry/generate-d
 
 export default defineNitroConfig({
   compatibilityDate: '2026-02-06',
+  experimental: { asyncContext: true },
   srcDir: 'server',
   virtual: {
     '#domain-instrumentation': generateDomainInstrumentation,
