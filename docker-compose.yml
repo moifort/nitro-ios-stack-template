@@ -1,0 +1,15 @@
+services:
+  server:
+    image: username/my-app:latest
+    container_name: my-app-server
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3000"
+      NITRO_API_TOKEN: ${NITRO_API_TOKEN}
+      NITRO_SERVER_URL: http://127.0.0.1:3000
+      NITRO_SENTRY_DSN: ${NITRO_SENTRY_DSN}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data

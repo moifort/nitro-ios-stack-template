@@ -1,0 +1,74 @@
+import Foundation
+
+struct TestAPIResponse<T: Decodable>: Decodable {
+    let status: Int
+    let data: T
+}
+
+final class TestAPIClient: @unchecked Sendable {
+    static let shared = TestAPIClient()
+
+    private let baseURL: URL
+    private let token = TestSecrets.apiToken
+    private let session = URLSession.shared
+
+    private let decoder: JSONDecoder = {
+        let d = JSONDecoder()
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let withoutFraction = ISO8601DateFormatter()
+        withoutFraction.formatOptions = [.withInternetDateTime]
+        d.dateDecodingStrategy = .custom { decoder in
+            let s = try decoder.singleValueContainer().decode(String.self)
+            if let date = withFraction.date(from: s) ?? withoutFraction.date(from: s) { return date }
+            throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Invalid date: \(s)"))
+        }
+        return d
+    }()
+
+    init() {
+        let envURL = ProcessInfo.processInfo.environment["TEST_SERVER_URL"]
+        self.baseURL = URL(string: envURL ?? "http://localhost:3000")!
+    }
+
+    // MARK: - Test Reset
+
+    func resetDatabase() throws {
+        _ = try performRequest("POST", path: "/test/reset")
+    }
+
+    // MARK: - HTTP
+
+    func performRequest(_ method: String, path: String, jsonBody: [String: Any]? = nil) throws -> Data {
+        let url = baseURL.appendingPathComponent(path)
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        if let jsonBody {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONSerialization.data(withJSONObject: jsonBody)
+        }
+
+        var responseData: Data?
+        var responseError: Error?
+
+        let semaphore = DispatchSemaphore(value: 0)
+        session.dataTask(with: request) { data, response, error in
+            if let error {
+                responseError = error
+            } else if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                responseError = NSError(domain: "TestAPI", code: http.statusCode, userInfo: [
+                    NSLocalizedDescriptionKey: "HTTP \(http.statusCode) for \(method) \(path)",
+                ])
+            } else {
+                responseData = data
+            }
+            semaphore.signal()
+        }.resume()
+        semaphore.wait()
+
+        if let error = responseError { throw error }
+        return responseData ?? Data()
+    }
+}

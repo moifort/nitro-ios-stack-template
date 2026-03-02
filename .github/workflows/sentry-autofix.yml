@@ -1,0 +1,56 @@
+name: Sentry Autofix
+
+on:
+  repository_dispatch:
+    types: [sentry-bug]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: sentry-autofix-${{ github.event.client_payload.title }}
+  cancel-in-progress: true
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            You are an expert developer fixing a production bug detected by Sentry.
+
+            ## Sentry Error
+            - **Title**: ${{ github.event.client_payload.title }}
+            - **Culprit**: ${{ github.event.client_payload.culprit }}
+            - **Level**: ${{ github.event.client_payload.level }}
+            - **Event**: ${{ github.event.client_payload.action }}
+            - **URL**: ${{ github.event.client_payload.url }}
+            - **Platform**: ${{ github.event.client_payload.platform }}
+            - **Metadata**: ${{ toJson(github.event.client_payload.metadata) }}
+
+            ## Instructions
+            1. Read the CLAUDE.md for project conventions
+            2. Analyze the error and find the responsible code
+            3. Propose a minimal, targeted fix
+            4. Verify your fix (typecheck, lint per CLAUDE.md commands)
+            5. Create a PR with:
+               - Branch: sentry-fix/<short-description>
+               - Title: fix: <concise description>
+               - Body: sections Sentry Error (link), Root Cause, Fix, Verification
+               - Labels: sentry-autofix, bug
+
+            If you cannot determine a fix with confidence, still create the PR
+            with your analysis and investigation leads.
+          claude_args: "--model claude-sonnet-4-6 --max-turns 30 --allowedTools 'Edit,Write,Bash(*)'"
+          branch_prefix: "sentry-fix/"

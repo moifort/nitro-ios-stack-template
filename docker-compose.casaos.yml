@@ -1,0 +1,49 @@
+name: my-app
+services:
+  server:
+    image: username/my-app:latest
+    container_name: my-app-server
+    restart: unless-stopped
+    cpu_shares: 50
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    hostname: my-app
+    pull_policy: always
+    logging:
+      driver: json-file
+      options:
+        max-size: 1m
+    environment:
+      HOST: 0.0.0.0
+      PORT: "3000"
+      NITRO_API_TOKEN: changeme
+      NITRO_SENTRY_DSN: ""
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - type: bind
+        source: /DATA/AppData/my-app
+        target: /app/data
+    network_mode: bridge
+    labels:
+      icon: https://raw.githubusercontent.com/username/my-app/main/icon.png
+    ports:
+      - target: 3000
+        published: "3000"
+        protocol: tcp
+
+x-casaos:
+  author: username
+  category: Utilities
+  icon: https://raw.githubusercontent.com/username/my-app/main/icon.png
+  index: /
+  port_map: "3000"
+  scheme: http
+  store_app_id: my-app
+  title:
+    en_us: My App
