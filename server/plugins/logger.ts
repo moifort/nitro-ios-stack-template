@@ -1,11 +1,15 @@
+import { createLogger } from '~/system/logger'
+
+const log = createLogger('http')
+
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('request', (event) => {
-    console.log(`${new Date().toISOString()} on request `, event.path)
+    log.info('on request', event.path)
   })
   nitroApp.hooks.hook('beforeResponse', (event, { body }) => {
-    console.log(`${new Date().toISOString()} on response`, event.path, { body })
+    log.info('on response', event.path, { body })
   })
   nitroApp.hooks.hook('error', (error) => {
-    console.error(`${new Date().toISOString()} on error`, error)
+    log.error('on error', error)
   })
 })

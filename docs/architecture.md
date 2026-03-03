@@ -77,3 +77,18 @@ storage: {
 - Storage operations are wrapped with spans (including `cache.hit` attribute)
 - HTTP requests get server spans with route name normalization
 - Errors (5xx only) are captured automatically
+
+## Logging
+
+Structured logging via [consola](https://github.com/unjs/consola) (transitive dependency of Nitro). Each module creates a tagged logger:
+
+```ts
+import { createLogger } from '~/system/logger'
+
+const log = createLogger('my-tag')
+
+log.info('Something happened', { details })
+log.error('Something failed')
+```
+
+The factory is in `server/system/logger.ts`. Tags appear in log output for easy filtering.

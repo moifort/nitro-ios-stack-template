@@ -1,6 +1,9 @@
 import { sortBy } from 'lodash-es'
+import { createLogger } from '~/system/logger'
 import { MigrationVersion } from '~/system/migration/primitives'
 import type { Migration, MigrationMeta } from '~/system/migration/types'
+
+const log = createLogger('migration')
 
 export const runMigrations = async (migrations: Migration[]) => {
   const metaStorage = useStorage('migration-meta')
@@ -27,8 +30,8 @@ export const runMigrations = async (migrations: Migration[]) => {
         version: migration.version,
         appliedAt: new Date(),
       })
-      console.log(
-        `[migration] Applied v${migration.version} "${migration.name}" (${result.transformed} transformed)`,
+      log.info(
+        `Applied v${migration.version} "${migration.name}" (${result.transformed} transformed)`,
       )
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)

@@ -24,6 +24,7 @@
 - Discriminated unions for errors (no exceptions)
 - File-based storage: `useStorage('namespace')`
 - Formatter: Biome (spaces, single quotes, no semicolons, line width 100)
+- Logging: `createLogger(tag)` from `~/system/logger` — never use raw `console.log/error`
 
 See [docs/architecture.md](docs/architecture.md) for full architecture overview.
 See [docs/domain-guide.md](docs/domain-guide.md) for step-by-step domain creation.
