@@ -22,7 +22,8 @@
 
 ## Backend Patterns (TypeScript/Nitro)
 
-- Domain architecture: `server/domain/{domain}/types.ts`, `primitives.ts`, `repository.ts`, `command.ts`, `query.ts`
+- Domain architecture: `server/domain/{domain}/types.ts`, `primitives.ts`, `repository.ts`, `command.ts`, `query.ts`, optionally `business-rules.ts`
+- **`business-rules.ts`**: when business logic in commands becomes complex, extract pure functions (no IO) into this file. Must have 100% test coverage (`business-rules.unit.test.ts`)
 - Branded types with `ts-brand` + Zod validation constructors in `primitives.ts`
 - Discriminated unions for errors (no exceptions)
 - File-based storage: `useStorage('namespace')`
