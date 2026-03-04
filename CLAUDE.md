@@ -8,6 +8,8 @@
   ```
   DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/MyApp.xcodeproj -scheme MyApp -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.2' build
   ```
+- **Unit tests**: `bun test`
+- **Test coverage**: `bun test --coverage`
 - **Linter**: `bunx biome check`
 - **Runtime**: always use `bun`/`bunx`, never `npm`/`npx`
 
@@ -15,7 +17,8 @@
 
 1. Always verify the build before committing (backend `bun tsc --noEmit` + `xcodebuild` depending on what was touched)
 2. Run `bunx nitro prepare` before `bun tsc` if routes were added/modified
-3. Run `bunx biome check --write` to auto-fix formatting
+3. Run tests before committing: `bun test`
+4. Run `bunx biome check --write` to auto-fix formatting
 
 ## Backend Patterns (TypeScript/Nitro)
 
@@ -28,6 +31,17 @@
 
 See [docs/architecture.md](docs/architecture.md) for full architecture overview.
 See [docs/domain-guide.md](docs/domain-guide.md) for step-by-step domain creation.
+
+## Backend Testing
+
+- **Framework**: `bun:test` (native, zero dependencies)
+- **Test files co-located** next to the file under test (no `__test__/` directories)
+- **Suffixes** (highest to lowest level):
+  - `*.func.test.ts` — functional API tests (business scenarios at route level)
+  - `*.int.test.ts` — integration tests (domain queries/commands, with mocked storage IO)
+  - `*.unit.test.ts` — unit tests (primitives, pure functions without IO)
+- **Infrastructure**: `server/test/setup.ts` (mock useStorage in-memory) + preloaded via `bunfig.toml`
+- **Coverage**: `bun test --coverage`
 
 ## Database Migrations
 
