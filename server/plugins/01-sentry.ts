@@ -1,10 +1,10 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: any is required for storage monkey-patching */
 import * as Sentry from '@sentry/bun'
 import { instrumentDomains } from '#domain-instrumentation'
 import { config } from '~/system/config/index'
 import { cacheKeys, isInRequestCache } from '~/system/request-cache'
 
 export default defineNitroPlugin((nitroApp) => {
+  if (typeof Bun === 'undefined') return
   const { sentryDsn } = config()
   if (!sentryDsn) return
 
@@ -43,7 +43,7 @@ export default defineNitroPlugin((nitroApp) => {
   })
 })
 
-const cachedMethods: Record<string, (args: any[]) => string> = {
+const cachedMethods: Record<string, (args: unknown[]) => string> = {
   getItem: cacheKeys.getItem,
   getItems: cacheKeys.getItems,
   getKeys: cacheKeys.getKeys,
@@ -53,8 +53,8 @@ const instrumentStorage = () => {
   const rootStorage = useStorage()
   const methods = ['getItem', 'getItems', 'setItem', 'removeItem', 'getKeys', 'hasItem'] as const
   methods.forEach((method) => {
-    const original = rootStorage[method].bind(rootStorage) as (...args: any[]) => any
-    ;(rootStorage as any)[method] = (...args: any[]) => {
+    const original = rootStorage[method].bind(rootStorage) as (...args: unknown[]) => unknown
+    ;(rootStorage as any)[method] = (...args: unknown[]) => {
       const key = typeof args[0] === 'string' ? args[0] : ''
       const namespace = key.split(':')[0] || 'storage'
       const cacheKeyBuilder = cachedMethods[method]
