@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@sentry/bun": "10.40.0",
+    "consola": "3.4.2",
     "lodash-es": "4.17.23",
     "ts-pattern": "5.9.0",
     "zod": "4.3.6"
