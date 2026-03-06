@@ -28,6 +28,7 @@
 - Discriminated unions for errors (no exceptions)
 - File-based storage: `useStorage('namespace')`
 - Formatter: Biome (spaces, single quotes, no semicolons, line width 100)
+- **External API files**: `server/domain/{domain}/{api-name}.api.ts` — isolate SDK/HTTP calls + response validation. Returns typed data or throws. Symmetric test: `{api-name}.api.int.test.ts`
 - Logging: `createLogger(tag)` from `~/system/logger` — never use raw `console.log/error`
 
 See [docs/architecture.md](docs/architecture.md) for full architecture overview.
