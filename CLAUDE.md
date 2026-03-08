@@ -50,7 +50,7 @@ See [docs/domain-guide.md](docs/domain-guide.md) for step-by-step domain creatio
 - **Framework**: `bun:test` (native, zero dependencies)
 - **Test files co-located** next to the file under test (no `__test__/` directories)
 - **Suffixes** (highest to lowest level):
-  - `*.func.test.ts` — functional API tests (business scenarios at route level)
+  - `*.feat.test.ts` — feature tests (business scenarios at route level)
   - `*.int.test.ts` — integration tests (domain queries/commands, with mocked storage IO)
   - `*.unit.test.ts` — unit tests (primitives, pure functions without IO)
 - **Infrastructure**: `server/test/setup.ts` (mock useStorage in-memory) + preloaded via `bunfig.toml`
@@ -70,9 +70,13 @@ See [docs/migrations.md](docs/migrations.md) for full guide.
 
 - Target: iOS 26.0, Swift 6 (strict concurrency)
 - `@MainActor` on ViewModels, `Sendable` on model types
-- Feature structure: `ios/MyApp/Features/{Feature}/`
+- Feature structure: `ios/MyApp/Features/{Feature}/` with `atoms/`, `molecules/`, `organisms/`, `pages/` subdirectories
+- Shared atoms: `ios/MyApp/Shared/Components/` — cross-feature reusable views (badges, ratings, labeled rows)
+- **Primitive-first views**: leaf views receive only primitives (`String`, `Int`, `Bool`, `Date?`, simple enums, closures) — never domain structs. Use nested `Item` structs for 5+ parameters
+- **Previews as Storybook**: every component must be previewable in isolation without a running server. Pages (coordinators) are the exception
 - Xcode uses `fileSystemSynchronizedGroups` (no need to manually add files)
 - `DEVELOPER_DIR` required because `xcode-select` may point to CommandLineTools
+- **Image generation**: use the `/image-gen` skill to generate iOS app icons or any other image assets. Use the same icon for both iOS and CasaOS
 
 See [docs/ios-guide.md](docs/ios-guide.md) for full iOS guide.
 
