@@ -222,6 +222,44 @@ export namespace WineListReadModel {
 - Only imports public Query/Command namespaces — never repositories
 - Names describe the view (`wine-list`, `wine-detail`, `overview`)
 
+## 10. Write Feature Tests (`*.feat.test.ts`)
+
+Feature tests use the BDD DSL from `server/test/bdd.ts` to read as living documentation:
+
+```ts
+import { expect } from 'bun:test'
+import { WineQuery } from '~/domain/wine/query'
+import { and, feature, given, scenario, then, when } from '~/test/bdd'
+import { mockEvent } from '~/test/setup'
+import handler from './index.post'
+
+feature('Creating a wine', () => {
+  scenario('adding a wine with all fields', async () => {
+    given('a valid wine payload')
+    const event = mockEvent({
+      body: { name: 'Château Margaux', color: 'red', country: 'France', year: 2018, price: 150 },
+    })
+
+    when('the wine is created')
+    const result = await handler(event as any)
+
+    then('the creation is confirmed')
+    expect(result.status).toBe(201)
+    expect(result.data.name as string).toBe('Château Margaux')
+
+    and('the wine is persisted in the catalog')
+    const wine = await WineQuery.getById(result.data.id)
+    expect(wine).not.toBeNull()
+  })
+})
+```
+
+**Rules:**
+- `feature()` = `describe`, `scenario()` = `test` — just aliases for readability
+- `given`/`when`/`then`/`and` are documentation markers (`console.log`) — assertions use `expect()`
+- One `.feat.test.ts` per route file, co-located next to the route
+- Journey tests (multi-route lifecycle) go in `server/test/journeys.feat.test.ts`
+
 ## Checklist
 
 - [ ] `types.ts` with branded types
@@ -231,6 +269,7 @@ export namespace WineListReadModel {
 - [ ] `command.ts` (public write namespace)
 - [ ] Storage namespace in `nitro.config.ts`
 - [ ] Route handlers in `server/routes/`
+- [ ] Feature tests (`*.feat.test.ts`) for each route
 - [ ] Test reset updated
 - [ ] `bunx nitro prepare && bun tsc --noEmit` passes
 - [ ] (optional) `use-case.ts` if multi-domain orchestration needed

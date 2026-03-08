@@ -38,6 +38,7 @@
 - Discriminated unions for expected business outcomes only (not technical errors). `throw` for impossible states (incoherent data → 500 + alert)
 - File-based storage: `useStorage('namespace')`
 - **Naming**: function names carry the business concept, not the technical pattern. The name IS the rule or action.
+- **BDD DSL**: `server/test/bdd.ts` — `feature()`, `scenario()`, `given()`, `when()`, `then()`, `and()` over `bun:test`. Feature tests use `.feat.test.ts` suffix.
 - Formatter: Biome (spaces, single quotes, no semicolons, line width 100)
 - **External API files**: `server/domain/{domain}/{api-name}.api.ts` — isolate SDK/HTTP calls + response validation. Returns typed data or throws. Symmetric test: `{api-name}.api.int.test.ts`
 - Logging: `createLogger(tag)` from `~/system/logger` — never use raw `console.log/error`
