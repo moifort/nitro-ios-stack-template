@@ -101,26 +101,19 @@ The app connects to `localhost:3000` by default, which works out of the box with
 
 ## Deployment
 
-### Build the Docker image
-
-```bash
-bun run build
-docker build -t your-app .
-```
-
 ### Run with Docker Compose
 
 ```bash
 docker compose up -d
 ```
 
-The `docker-compose.yml` file mounts a `./data` volume for persistent storage and exposes port 3000. Set your environment variables (`NITRO_API_TOKEN`, `NITRO_SENTRY_DSN`) in the compose file or via an `.env` file.
+The Docker image is built automatically by CI on every push to `main`. The `docker-compose.yml` file mounts a `./data` volume for persistent storage and exposes port 3000. Set your environment variables (`NITRO_API_TOKEN`, `NITRO_SENTRY_DSN`) in the compose file or via an `.env` file.
 
 ### CasaOS (home server)
 
 A [CasaOS](https://casaos.io/)-compatible compose file is provided in `docker-compose.casaos.yml`. To use it:
 
-1. Update the `image` field with your Docker image (e.g. `ghcr.io/your-org/your-app:latest`)
+1. Update the `image` field with your Docker image (e.g. `ghcr.io/your-org/your-app:main`)
 2. Set your environment variables
 3. Update the `x-casaos` metadata (title, icon, author)
 4. Import the file in CasaOS

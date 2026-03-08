@@ -1,6 +1,6 @@
 services:
   server:
-    image: username/my-app:latest
+    image: ghcr.io/username/my-app:main
     container_name: my-app-server
     restart: unless-stopped
     environment:
