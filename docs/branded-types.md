@@ -4,6 +4,8 @@
 
 We use [ts-brand](https://github.com/nicklasw/ts-brand) to create nominal types that prevent accidental mixing of semantically different values (e.g., `WineId` vs `CellarId`), combined with [Zod](https://zod.dev/) for runtime validation.
 
+This implements two DDD concepts: Evans' **Value Objects** (types defined by their value, immutable, no identity) and Wlashin's **making illegal states unrepresentable** (if a value exists as a branded type, it has already been validated — no downstream checks needed).
+
 ## Pattern
 
 ### 1. Define the branded type (`types.ts`)
@@ -29,6 +31,8 @@ export const WineId = (value: unknown) => {
 ```
 
 ### 3. Use at domain boundaries
+
+> **Evans:** this is the Anti-Corruption Layer in action — raw external data is validated and translated into domain types at the boundary, protecting the domain model from invalid state.
 
 ```ts
 // In a route handler — validation happens here
