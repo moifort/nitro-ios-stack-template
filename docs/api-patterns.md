@@ -60,7 +60,7 @@ import { Eur, Year, Country } from '~/domain/shared/primitives'
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
 
-  // Validate at boundary
+  // Validate at boundary — Anti-Corruption Layer (Evans): raw HTTP data becomes trusted domain types
   const wine: Wine = {
     id: WineId(crypto.randomUUID()),
     name: z.string().min(1).parse(body.name),
@@ -117,7 +117,7 @@ export default defineEventHandler(async (event) => {
 
 ## Key Rules
 
-1. **Validate at the route boundary** — Use Zod/branded constructors on all input
-2. **Never validate inside the domain** — Trust branded types
-3. **Map outcomes to HTTP** — Use `match().exhaustive()` for all command results
+1. **Validate at the route boundary** — Use Zod/branded constructors on all input. Evans: Anti-Corruption Layer — the route is the boundary where external data is translated into trusted domain types.
+2. **Never validate inside the domain** — Trust branded types. Wlashin: if it's branded, illegal states are already unrepresentable — no re-validation needed.
+3. **Map outcomes to HTTP** — Use `match().exhaustive()` for all command results. Wlashin: Railway-Oriented Programming meets HTTP — each track maps to a status code.
 4. **Consistent envelope** — Always `{ status, data }`
