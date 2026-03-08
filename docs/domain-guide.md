@@ -1,6 +1,6 @@
 # Adding a New Domain
 
-Step-by-step guide to adding a new domain to the backend.
+Step-by-step guide to adding a new domain to the backend. Each step corresponds to a DDD building block from Evans (*Domain-Driven Design*) or Wlashin (*Domain Modeling Made Functional*).
 
 ## 1. Create the Domain Directory
 
@@ -14,6 +14,8 @@ server/domain/wine/
 ```
 
 ## 2. Define Types (`types.ts`)
+
+> **Evans:** Value Objects (types defined by their value, not an identity) and Entities (types with an `id`). **Wlashin:** types as documentation — the type definition IS the domain model specification.
 
 ```ts
 import type { Brand } from 'ts-brand'
@@ -35,6 +37,8 @@ export type Wine = {
 
 ## 3. Create Primitives (`primitives.ts`)
 
+> **Wlashin:** making illegal states unrepresentable — if a value passes the Zod constructor, it is guaranteed valid throughout the system. No downstream code needs to re-validate.
+
 ```ts
 import { make } from 'ts-brand'
 import { z } from 'zod'
@@ -52,6 +56,8 @@ export const WineColor = (value: unknown) =>
 ```
 
 ## 4. Create Repository (`repository.ts`)
+
+> **Evans:** Repository pattern — provides a collection-like interface for accessing domain objects while hiding persistence details. Private to the bounded context.
 
 ```ts
 import type { Wine, WineId } from '~/domain/wine/types'
@@ -78,6 +84,8 @@ export namespace WineRepository {
 
 ## 5. Create Query (`query.ts`)
 
+> **Evans:** the Query namespace is the bounded context's public read interface. Other domains interact through this contract, never through the repository.
+
 ```ts
 import { WineRepository } from '~/domain/wine/repository'
 
@@ -91,6 +99,10 @@ export namespace WineQuery {
 ```
 
 ## 6. Create Command (`command.ts`)
+
+> **Evans:** Command as the bounded context's public write interface. **Wlashin:** Railway-Oriented Programming — each outcome is a track, and discriminated unions make every possible result explicit.
+>
+> **Result types are rare and business-oriented.** Outcomes are simple strings (`'created'`, `'not-found'`). Use them only when the domain has multiple legitimate outcomes. If a state is functionally impossible (data that should exist but doesn't) → `throw`, don't return a Result. See [error-handling.md](./error-handling.md).
 
 ```ts
 import { WineRepository } from '~/domain/wine/repository'
@@ -137,6 +149,8 @@ for (const name of [
 
 ## Optional: Use Case (`use-case.ts`)
 
+> **Evans:** Application Service — orchestrates operations across multiple bounded contexts without owning business logic itself.
+
 When a route needs to orchestrate multiple domains (e.g. create a wine AND record a tasting), extract a use case:
 
 ```ts
@@ -159,6 +173,8 @@ export namespace WineUseCase {
 
 ## Optional: Business Rules (`business-rules.ts`)
 
+> **Wlashin:** pure domain functions — all business logic is expressed as pure functions with no IO, making it trivially testable and easy to reason about.
+
 When command logic becomes complex, extract pure functions (no IO, no async):
 
 ```ts
@@ -180,6 +196,8 @@ export const wineStatus = (context: {
 - Must have 100% test coverage (`business-rules.unit.test.ts`)
 
 ## Optional: Read Model (`server/read-model/{domain}/`)
+
+> This is the Query Model / read side of CQRS — a dedicated projection optimized for display, assembled from multiple bounded contexts.
 
 When a route needs a composite view assembling data from multiple domains:
 
