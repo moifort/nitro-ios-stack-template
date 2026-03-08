@@ -18,7 +18,15 @@
 1. Always verify the build before committing (backend `bun tsc --noEmit` + `xcodebuild` depending on what was touched)
 2. Run `bunx nitro prepare` before `bun tsc` if routes were added/modified
 3. Run tests before committing: `bun test`
-4. Run `bunx biome check --write` to auto-fix formatting
+4. Run `bunx biome check --write` to auto-fix formatting and lint
+5. Fix remaining lint errors. `biome-ignore` is exceptional — only when justified, with an explanation in the comment
+
+## Commit Strategy
+
+- **Conventional Commits**: `type(scope): description` — types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
+- **Scopes**: domain name for business changes (`feat(cellar): ...`), technical name otherwise (`fix(migration): ...`, `chore(deps): ...`). Omit scope if too broad
+- **Commit after each verified task**: all checks pass (build + tests + lint) before committing
+- **Fine granularity, functional coherence**: each commit = one logical change. Small enough to identify bugs via `git bisect` or commit history, but coherent enough to stand on its own
 
 ## Backend Patterns (TypeScript/Nitro)
 
@@ -27,7 +35,7 @@
 - **`use-case.ts`** (optional): multi-domain orchestrations when a route needs to coordinate several commands/queries. Names carry business intent (`addWithTasting`, `removeCompletely` — never `handleX`, `processX`). No direct storage access.
 - **Read models**: `server/read-model/{domain}/` — composite views assembling multiple domains for display needs. Mirror the `domain/` structure. Only import public Query/Command namespaces, never repositories.
 - Branded types with `ts-brand` + Zod validation constructors in `primitives.ts`
-- Discriminated unions for errors (no exceptions)
+- Discriminated unions for expected business outcomes only (not technical errors). `throw` for impossible states (incoherent data → 500 + alert)
 - File-based storage: `useStorage('namespace')`
 - **Naming**: function names carry the business concept, not the technical pattern. The name IS the rule or action.
 - Formatter: Biome (spaces, single quotes, no semicolons, line width 100)
@@ -78,7 +86,7 @@ See [docs/ios-guide.md](docs/ios-guide.md) for full iOS guide.
 - **Use `Date` type** — not `string` for dates
 - **Use lodash-es** — `sortBy`, `keyBy`, `uniq` with destructured callbacks
 - **Never `switch`** — use `match()` from `ts-pattern` with `.exhaustive()`
-- **Never `for` loops** — use `map`/`filter`/`reduce` or lodash
+- **Never `for`/`while` loops** — use `map`/`filter`/`reduce`, chaining, and lodash-es utilities for readability
 - **Arrays never optional** — `[]` is the neutral state, never `null`/`undefined`/`nil`
 
 See [docs/code-style.md](docs/code-style.md) for full rules with examples.

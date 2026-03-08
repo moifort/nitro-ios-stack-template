@@ -1,5 +1,7 @@
 # Code Style Guide
 
+Many of these rules implement DDD principles from Evans (*Domain-Driven Design*) and functional modeling principles from Wlashin (*Domain Modeling Made Functional*).
+
 ## Formatter
 
 Biome with:
@@ -23,6 +25,8 @@ export const getAll = async () => { ... }
 ```
 
 ### Full variable names
+
+> **Evans:** Ubiquitous Language — code reads like the domain language. `migration` says what it is; `m` says nothing.
 
 ```ts
 // Bad
@@ -104,6 +108,8 @@ const colors = uniq(wines.map(({ color }) => color))
 
 ### All union types validated in `primitives.ts`
 
+> **Wlashin:** making illegal states unrepresentable — every union value is validated through a Zod constructor, so invalid variants cannot exist at runtime.
+
 ```ts
 // Bad
 const color = body.color as WineColor
@@ -113,6 +119,8 @@ const color = WineColor(body.color)
 ```
 
 ### Never `switch` — use `match().exhaustive()`
+
+> **Wlashin:** totality — `.exhaustive()` forces every case to be handled. Adding a new variant becomes a compile error, not a silent bug.
 
 ```ts
 import { match } from 'ts-pattern'
@@ -127,18 +135,24 @@ match(result)
   .exhaustive()
 ```
 
-### Never `for` loops — use functional style
+### Never `for`/`while` loops — use functional style
+
+> **Wlashin:** functional composition — `map`/`filter`/`reduce` express intent declaratively. Each transformation is a self-contained step in a pipeline. Chaining and lodash-es utilities improve readability over imperative loops.
 
 ```ts
 // Bad
 for (const wine of wines) { ... }
+while (condition) { ... }
 
 // Good
 wines.map((wine) => ...)
 wines.filter((wine) => ...)
+sortBy(wines, ({ year }) => year)
 ```
 
 ### Arrays never optional
+
+> **Wlashin:** every value of the type is valid — `[]` is a perfectly valid array. Optional arrays create two representations of "empty" (`undefined` vs `[]`), which is an illegal state.
 
 ```ts
 // Bad
