@@ -11,11 +11,16 @@ server/
 ├── domain/           # Business logic (DDD bounded contexts)
 │   ├── shared/       # Shared types across domains (Eur, Year, etc.)
 │   └── {domain}/     # One folder per domain
-│       ├── types.ts       # Domain types (branded)
-│       ├── primitives.ts  # Zod validation constructors
-│       ├── repository.ts  # Data access (private to domain)
-│       ├── query.ts       # Read operations (public)
-│       └── command.ts     # Write operations (public)
+│       ├── types.ts           # Domain types (branded)
+│       ├── primitives.ts      # Zod validation constructors
+│       ├── repository.ts      # Data access (private to domain)
+│       ├── query.ts           # Read operations (public)
+│       ├── command.ts         # Write operations (public)
+│       ├── use-case.ts        # (optional) Multi-domain orchestrations
+│       └── business-rules.ts  # (optional) Pure functions, no IO
+├── read-model/       # Composite views assembling multiple domains
+│   └── {domain}/     # Mirrors domain/ structure
+│       └── {view}.ts # e.g. wine-list.ts, wine-detail.ts, overview.ts
 ├── routes/           # HTTP endpoints (auto-scanned by Nitro)
 ├── middleware/        # Request middleware (auth)
 ├── plugins/           # Nitro plugins (sentry, migration, cache)
@@ -34,10 +39,18 @@ Each domain is a self-contained bounded context:
 - **repository.ts** — File-based storage access (private, never imported from outside the domain)
 - **query.ts** — Public read operations (exported namespace)
 - **command.ts** — Public write operations (exported namespace)
+- **use-case.ts** — (optional) Multi-domain orchestrations. Names carry business intent (`addWithTasting`, not `handleCreate`). No direct storage access.
+- **business-rules.ts** — (optional) Pure functions (no IO, no async). Function names ARE the business concept (`wineStatus`, not `computeWineStatus`). 100% test coverage required.
+
+### Read Model Layer (`server/read-model/`)
+
+Composite views that assemble data from multiple domains for display needs. Mirrors the `domain/` structure. Only imports public Query/Command namespaces — never repositories directly.
+
+Read models answer questions like "what does the wine list look like with ratings and contacts?" or "what's the dashboard overview?". They exist because these views span multiple bounded contexts.
 
 ### Route Layer (`server/routes/`)
 
-HTTP handlers that validate input at the boundary, call domain queries/commands, and return responses.
+HTTP handlers that validate input at the boundary, call domain queries/commands (or use cases/read models), and return responses.
 
 ### System Layer (`server/system/`)
 
@@ -51,13 +64,19 @@ Infrastructure concerns: config, migration, Sentry instrumentation, request cach
 
 ## Data Flow
 
+**Simple operation (single domain):**
 ```
-HTTP Request
-  → middleware/auth.ts (Bearer token validation)
-  → routes/{path}.ts (input validation via Zod)
-  → domain/{domain}/command.ts or query.ts
-  → domain/{domain}/repository.ts (storage access)
-  → HTTP Response { status, data }
+HTTP Request → route → domain command/query → repository → Response
+```
+
+**Orchestrated operation (multi-domain):**
+```
+HTTP Request → route → use-case → multiple commands/queries → Response
+```
+
+**Composite read (cross-domain view):**
+```
+HTTP Request → route → read-model → multiple domain queries → Response
 ```
 
 ## Storage

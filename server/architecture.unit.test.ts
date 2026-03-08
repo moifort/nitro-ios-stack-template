@@ -115,6 +115,72 @@ describe('architecture', () => {
     })
   })
 
+  describe('read models do not bypass domain boundaries', () => {
+    const readModelFiles = glob('server/read-model/**/*.ts').filter((f) => !f.endsWith('.test.ts'))
+
+    test('read models only use public Query/Command namespaces', () => {
+      const violations: string[] = []
+      for (const file of readModelFiles) {
+        const content = readFile(join(SERVER_DIR, '..', file))
+        const lines = content.split('\n')
+        for (let i = 0; i < lines.length; i++) {
+          if (/from\s+['"]~\/domain\/\w+\/repository['"]/.test(lines[i])) {
+            violations.push(`${file}:${i + 1}: imports repository directly`)
+          }
+          if (/useStorage/.test(lines[i])) {
+            violations.push(`${file}:${i + 1}: uses useStorage directly`)
+          }
+        }
+      }
+      expect(violations).toEqual([])
+    })
+  })
+
+  describe('business-rules.ts is pure (no IO)', () => {
+    const businessRulesFiles = glob('server/domain/*/business-rules.ts')
+
+    for (const file of businessRulesFiles) {
+      test(basename(dirname(file)), () => {
+        const content = readFile(join(SERVER_DIR, '..', file))
+        const violations: string[] = []
+        const lines = content.split('\n')
+        for (let i = 0; i < lines.length; i++) {
+          if (/useStorage/.test(lines[i])) {
+            violations.push(`${file}:${i + 1}: uses useStorage (must be pure)`)
+          }
+          if (/\basync\b/.test(lines[i])) {
+            violations.push(`${file}:${i + 1}: uses async (must be pure/synchronous)`)
+          }
+        }
+        expect(violations).toEqual([])
+      })
+    }
+  })
+
+  describe('use-case.ts does not bypass domain boundaries', () => {
+    const useCaseFiles = glob('server/domain/*/use-case.ts')
+
+    for (const file of useCaseFiles) {
+      test(basename(dirname(file)), () => {
+        const content = readFile(join(SERVER_DIR, '..', file))
+        const violations: string[] = []
+        const lines = content.split('\n')
+        for (let i = 0; i < lines.length; i++) {
+          if (/useStorage/.test(lines[i])) {
+            violations.push(`${file}:${i + 1}: uses useStorage (must go through commands/queries)`)
+          }
+          const repoMatch = lines[i].match(/from\s+['"]~\/domain\/(\w+)\/repository['"]/)
+          if (repoMatch) {
+            violations.push(
+              `${file}:${i + 1}: imports ${repoMatch[1]}/repository (must go through commands/queries)`,
+            )
+          }
+        }
+        expect(violations).toEqual([])
+      })
+    }
+  })
+
   describe('no throw in domain query.ts and command.ts', () => {
     const targets = glob('server/domain/*/{query,command}.ts')
 

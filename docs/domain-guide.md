@@ -135,6 +135,75 @@ for (const name of [
 ]) {
 ```
 
+## Optional: Use Case (`use-case.ts`)
+
+When a route needs to orchestrate multiple domains (e.g. create a wine AND record a tasting), extract a use case:
+
+```ts
+import { WineCommand } from '~/domain/wine/command'
+import { TastingCommand } from '~/domain/tasting/command'
+
+export namespace WineUseCase {
+  export const addWithTasting = async (wineData: ..., tastingData?: ...) => {
+    const wine = await WineCommand.add(wineData)
+    if (tastingData) await TastingCommand.create({ wineId: wine.id, ...tastingData })
+    return wine
+  }
+}
+```
+
+**Rules:**
+- Names carry business intent (`addWithTasting`, `removeCompletely` — never `handleX`, `processX`)
+- No direct storage access (`useStorage`) — go through commands/queries
+- The route becomes a single line: validate input → call use case → return response
+
+## Optional: Business Rules (`business-rules.ts`)
+
+When command logic becomes complex, extract pure functions (no IO, no async):
+
+```ts
+export const wineStatus = (context: {
+  inCellar: boolean
+  gifted: boolean
+  recommended: boolean
+}): WineStatus => {
+  if (context.inCellar) return 'in-cellar'
+  if (context.gifted) return 'gifted'
+  if (context.recommended) return 'recommended'
+  return 'consumed'
+}
+```
+
+**Rules:**
+- Function names ARE the business concept (`wineStatus`, `readyToDrink` — never `computeX`, `getX`)
+- No IO, no async, no `useStorage` — pure input/output
+- Must have 100% test coverage (`business-rules.unit.test.ts`)
+
+## Optional: Read Model (`server/read-model/{domain}/`)
+
+When a route needs a composite view assembling data from multiple domains:
+
+```ts
+// server/read-model/wine/wine-list.ts
+import { WineQuery } from '~/domain/wine/query'
+import { TastingQuery } from '~/domain/tasting/query'
+
+export namespace WineListReadModel {
+  export const all = async () => {
+    const [wines, tastings] = await Promise.all([
+      WineQuery.findAll(),
+      TastingQuery.getAll(),
+    ])
+    // ... assemble the view
+  }
+}
+```
+
+**Rules:**
+- Lives in `server/read-model/{domain}/` — mirrors the domain structure
+- Only imports public Query/Command namespaces — never repositories
+- Names describe the view (`wine-list`, `wine-detail`, `overview`)
+
 ## Checklist
 
 - [ ] `types.ts` with branded types
@@ -146,3 +215,6 @@ for (const name of [
 - [ ] Route handlers in `server/routes/`
 - [ ] Test reset updated
 - [ ] `bunx nitro prepare && bun tsc --noEmit` passes
+- [ ] (optional) `use-case.ts` if multi-domain orchestration needed
+- [ ] (optional) `business-rules.ts` with 100% test coverage if complex logic
+- [ ] (optional) `server/read-model/{domain}/` if composite views needed

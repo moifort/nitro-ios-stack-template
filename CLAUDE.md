@@ -22,11 +22,14 @@
 
 ## Backend Patterns (TypeScript/Nitro)
 
-- Domain architecture: `server/domain/{domain}/types.ts`, `primitives.ts`, `repository.ts`, `command.ts`, `query.ts`, optionally `business-rules.ts`
-- **`business-rules.ts`**: when business logic in commands becomes complex, extract pure functions (no IO) into this file. Must have 100% test coverage (`business-rules.unit.test.ts`)
+- Domain architecture: `server/domain/{domain}/types.ts`, `primitives.ts`, `repository.ts`, `command.ts`, `query.ts`
+- **`business-rules.ts`** (optional): pure functions (no IO, no async) extracted from complex commands. Function names ARE the business concept (`wineStatus`, `readyToDrink` — never `computeX`, `getX`, `calculateX`). Must have 100% test coverage (`business-rules.unit.test.ts`)
+- **`use-case.ts`** (optional): multi-domain orchestrations when a route needs to coordinate several commands/queries. Names carry business intent (`addWithTasting`, `removeCompletely` — never `handleX`, `processX`). No direct storage access.
+- **Read models**: `server/read-model/{domain}/` — composite views assembling multiple domains for display needs. Mirror the `domain/` structure. Only import public Query/Command namespaces, never repositories.
 - Branded types with `ts-brand` + Zod validation constructors in `primitives.ts`
 - Discriminated unions for errors (no exceptions)
 - File-based storage: `useStorage('namespace')`
+- **Naming**: function names carry the business concept, not the technical pattern. The name IS the rule or action.
 - Formatter: Biome (spaces, single quotes, no semicolons, line width 100)
 - **External API files**: `server/domain/{domain}/{api-name}.api.ts` — isolate SDK/HTTP calls + response validation. Returns typed data or throws. Symmetric test: `{api-name}.api.int.test.ts`
 - Logging: `createLogger(tag)` from `~/system/logger` — never use raw `console.log/error`
